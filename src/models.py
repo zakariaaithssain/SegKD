@@ -104,16 +104,18 @@ class FeatureAdapters(nn.Module):
     Projette les feature maps du Student vers les dimensions du Teacher
     via des convolutions 1×1.
 
-    Teacher (UNet++)      : [64, 128, 256, 512]
-    Student (UNetStudent) : [128, 256, 512, 1280]  # Updated based on actual output
+    Teacher (UNet++)      : [512, 256, 128, 64]  # Reversed order
+    Student (UNetStudent) : [320, 96, 32, 24]    # Reversed order
+    
+    Note: Features are returned from deepest to shallowest level
     """
 
     def __init__(self):
         super().__init__()
 
-        # Updated to match your actual UNetStudent output channels
-        student_channels = [128, 256, 512, 1280]  # Changed from [24, 32, 96, 320]
-        teacher_channels = [64, 128, 256, 512]
+        # Reversed order: deep → shallow
+        student_channels = [320, 96, 32, 24]  # Was [24, 32, 96, 320]
+        teacher_channels = [512, 256, 128, 64]  # Was [64, 128, 256, 512]
 
         self.adapters = nn.ModuleList([
             nn.Conv2d(s_ch, t_ch, kernel_size=1, bias=False)
