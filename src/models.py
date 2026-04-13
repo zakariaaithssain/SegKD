@@ -53,7 +53,6 @@ class UNetPlusPlus(nn.Module):
 # ─────────────────────────────────────────────
 #  Student : U-Net léger (via segmentation-models-pytorch)
 # ─────────────────────────────────────────────
-
 class UNetStudent(nn.Module):
     """
     Student — U-Net léger avec encodeur MobileNetV2 pré-entraîné.
@@ -77,10 +76,10 @@ class UNetStudent(nn.Module):
     def _register_hooks(self):
         # Extraire 4 blocs de l'encodeur MobileNetV2
         layers = [
-            self.model.encoder.features[3],
-            self.model.encoder.features[6],
-            self.model.encoder.features[13],
-            self.model.encoder.features[18],
+            self.model.encoder.features[3],   # 24 channels
+            self.model.encoder.features[6],   # 32 channels
+            self.model.encoder.features[13],  # 96 channels
+            self.model.encoder.features[17],  # 320 channels (FIXED: was [18])
         ]
         for layer in layers:
             h = layer.register_forward_hook(self._hook_fn)
@@ -94,28 +93,15 @@ class UNetStudent(nn.Module):
         logits = self.model(x)
         features = self._features.copy()
         return logits, features
-
-
 # ─────────────────────────────────────────────
 #  Couches d'adaptation (1×1 conv)
 # ─────────────────────────────────────────────
 class FeatureAdapters(nn.Module):
-    """
-    Projette les feature maps du Student vers les dimensions du Teacher
-    via des convolutions 1×1.
-
-    Teacher (UNet++)      : [512, 256, 128, 64]  # Reversed order
-    Student (UNetStudent) : [320, 96, 32, 24]    # Reversed order
-    
-    Note: Features are returned from deepest to shallowest level
-    """
-
     def __init__(self):
         super().__init__()
 
-        # Reversed order: deep → shallow
-        student_channels = [320, 96, 32, 24]  # Was [24, 32, 96, 320]
-        teacher_channels = [512, 256, 128, 64]  # Was [64, 128, 256, 512]
+        student_channels = [24, 32, 96, 320]    # Correct!
+        teacher_channels = [64, 128, 256, 512]  # Correct!
 
         self.adapters = nn.ModuleList([
             nn.Conv2d(s_ch, t_ch, kernel_size=1, bias=False)
@@ -126,10 +112,7 @@ class FeatureAdapters(nn.Module):
         return [
             adapter(feat)
             for adapter, feat in zip(self.adapters, student_features)
-        ]
-# ─────────────────────────────────────────────
-#  Test rapide
-# ─────────────────────────────────────────────
+        ]# ─────────────────────────────────────────────
 
 if __name__ == "__main__":
     import torch
