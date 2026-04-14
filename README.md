@@ -2,7 +2,6 @@
 
 Binary semantic segmentation of cracks in concrete structures using feature-based knowledge distillation to compress a large teacher model into a lightweight student model.
 
-**Course:** Deep Learning 2 — ENSIAS, Universite Mohammed V de Rabat (2025-2026)
 
 ---
 
@@ -10,10 +9,6 @@ Binary semantic segmentation of cracks in concrete structures using feature-base
 
 This project trains a **Teacher** (U-Net++ / ResNet34) and a **Student** (U-Net / MobileNetV2) on crack segmentation, then uses **feature-based knowledge distillation** to transfer the teacher's intermediate representations to the student. The result is a model ~10x smaller and ~4x faster that recovers most of the teacher's performance.
 
-```text
-Teacher (U-Net++ / ResNet34)  ->  31.2 M params  ~45 ms/img
-Student (U-Net / MobileNetV2) ->   3.1 M params  ~12 ms/img
-```
 
 ---
 
@@ -22,15 +17,16 @@ Student (U-Net / MobileNetV2) ->   3.1 M params  ~12 ms/img
 ```text
 crack-seg-kd/
 ├── src/
-│   ├── models.py       # Teacher, Student, and FeatureAdapters architectures
-│   ├── train.py        # Training pipeline (teacher / student / distill / eval)
-│   ├── losses.py       # DiceLoss, SegmentationLoss, FeatureKDLoss, TotalDistillationLoss
-│   ├── metrics.py      # IoU, F1, inference benchmark, comparison table
-│   └── dataset.py      # CrackDataset, augmentation pipeline, dataloaders
-├── notebook.ipynb      # Interactive exploration and visualization
-├── requirements.txt
-└── data/
-    ├── train/          # 8 163 image-mask pairs
+│   ├── models.py           # Teacher, Student, and FeatureAdapters architectures
+│   ├── train.py            # Training pipeline (teacher / student / distill / eval)
+│   ├── losses.py           # DiceLoss, SegmentationLoss, FeatureKDLoss, TotalDistillationLoss
+│   ├── metrics.py          # IoU, F1, inference benchmark, comparison table
+│   └── dataset.py          # CrackDataset, augmentation pipeline, dataloaders
+├── u-net_training.ipynb    # notebook used to train the U-Net in Kaggle 
+├── u-net-pp_training.ipynb # notebook used to train the U-Net++ in Kaggle
+├── u-net-distillation.ipynb #notebook used to distill the teacher into the student 
+└── data/ #this folder will be created automatically by runninig main.py
+    ├── train/          # 8 163 image-mask pairs 
     ├── val/            # 1 440 image-mask pairs
     └── test/           # 1 695 image-mask pairs
 ```
@@ -81,11 +77,14 @@ Multi-source crack segmentation dataset aggregated from GAPS384, CRACK500, DeepC
 
 ## Installation
 
-```bash
-pip install -r requirements.txt
-```
+```bash 
+#install requirements
+uv sync 
 
-**Requirements:** Python >= 3.8, PyTorch >= 2.0, CUDA recommended.
+# download data and split it automatically 
+uv run main.py
+
+```
 
 ---
 
@@ -96,25 +95,25 @@ All training modes are controlled via `src/train.py`.
 ### 1. Train the Teacher
 
 ```bash
-python src/train.py --mode teacher --epochs 50 --batch_size 8
+uv run src/train.py --mode teacher --epochs 50 --batch_size 8
 ```
 
 ### 2. Train the Student (baseline, no distillation)
 
 ```bash
-python src/train.py --mode student --epochs 50 --batch_size 8
+uv run src/train.py --mode student --epochs 50 --batch_size 8
 ```
 
 ### 3. Knowledge Distillation
 
 ```bash
-python src/train.py --mode distill --epochs 50 --lambda_kd 1.0
+uv run src/train.py --mode distill --epochs 50 --lambda_kd 1.0
 ```
 
 ### 4. Evaluate all models
 
 ```bash
-python src/train.py --mode eval
+uv run src/train.py --mode eval
 ```
 
 Prints a comparison table with IoU, F1, parameter count, and inference latency for all three models.
@@ -133,32 +132,3 @@ Prints a comparison table with IoU, F1, parameter count, and inference latency f
 | `--checkpoint_dir` | `checkpoints/` | Where to save models                         |
 
 ---
-
-## Results
-
-| Model                               | IoU | F1 | Params | Latency |
-|-------------------------------------|-----|----|--------|---------|
-| Teacher (U-Net++ / ResNet34)        | —   | —  | 31.2 M | ~45 ms  |
-| Student alone (U-Net / MobileNetV2) | —   | —  | 3.1 M  | ~12 ms  |
-| Student distilled                   | —   | —  | 3.1 M  | ~12 ms  |
-
-*Fill in after running evaluation.*
-
----
-
-## Notebook
-
-`notebook.ipynb` provides an end-to-end interactive workflow:
-
-1. Dataset visualization
-2. Architecture comparison (parameter counts, feature map shapes)
-3. Training instructions
-4. Evaluation and metric comparison
-5. Feature map visualization (teacher vs. student)
-6. Side-by-side prediction comparison
-
----
-
-## License
-
-For academic use only.
