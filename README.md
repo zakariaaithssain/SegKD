@@ -22,9 +22,13 @@ crack-seg-kd/
 │   ├── losses.py           # DiceLoss, SegmentationLoss, FeatureKDLoss, TotalDistillationLoss
 │   ├── metrics.py          # IoU, F1, inference benchmark, comparison table
 │   └── dataset.py          # CrackDataset, augmentation pipeline, dataloaders
+│
 ├── u-net_training.ipynb    # notebook used to train the U-Net in Kaggle 
 ├── u-net-pp_training.ipynb # notebook used to train the U-Net++ in Kaggle
 ├── u-net-distillation.ipynb #notebook used to distill the teacher into the student 
+│
+├── checkpoints/ # containts .pth files for the models best checkpoints 
+│
 └── data/ #this folder will be created automatically by runninig main.py
     ├── train/          # 8 163 image-mask pairs 
     ├── val/            # 1 440 image-mask pairs
