@@ -36,7 +36,7 @@ def train_teacher(args, device, loaders):
     print("  MODE : TEACHER (U-Net++)")
     print("="*55)
 
-    model     = UNetPlusPlus().to(device)
+    model     = UNetPlusPlus().to(device, non_blocking= True)
     criterion = SegmentationLoss(alpha=0.5)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs)
@@ -48,7 +48,7 @@ def train_teacher(args, device, loaders):
         total_loss = 0.0
 
         for images, masks in loaders["train"]:
-            images, masks = images.to(device), masks.to(device)
+            images, masks = images.to(device, non_blocking= True), masks.to(device, non_blocking= True)
 
             optimizer.zero_grad()
             logits, _ = model(images)
@@ -91,7 +91,7 @@ def train_student_alone(args, device, loaders):
     print("  MODE : STUDENT SEUL (sans distillation)")
     print("="*55)
 
-    model     = UNetStudent().to(device)
+    model     = UNetStudent().to(device, non_blocking= True)
     criterion = SegmentationLoss(alpha=0.5)
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
     scheduler = CosineAnnealingLR(optimizer, T_max=args.epochs)
@@ -103,7 +103,7 @@ def train_student_alone(args, device, loaders):
         total_loss = 0.0
 
         for images, masks in loaders["train"]:
-            images, masks = images.to(device), masks.to(device)
+            images, masks = images.to(device, non_blocking= True), masks.to(device, non_blocking= True)
 
             optimizer.zero_grad()
             logits, _ = model(images)
@@ -145,7 +145,7 @@ def train_distill(args, device, loaders):
     print("="*55)
 
     # Charger le Teacher pré-entraîné
-    teacher = UNetPlusPlus().to(device)
+    teacher = UNetPlusPlus().to(device, non_blocking=True)
     if not os.path.exists("checkpoints/teacher_best.pth"):
         raise FileNotFoundError(
             "Le checkpoint du Teacher est introuvable.\n"
@@ -157,8 +157,8 @@ def train_distill(args, device, loaders):
         param.requires_grad = False          # Teacher figé
 
     # Student + Adapters
-    student  = UNetStudent().to(device)
-    adapters = FeatureAdapters().to(device)
+    student  = UNetStudent().to(device, non_blocking= True)
+    adapters = FeatureAdapters().to(device, non_blocking= True)
 
     criterion = TotalDistillationLoss(lambda_kd=args.lambda_kd, alpha_seg=0.5)
     optimizer = optim.Adam(
@@ -178,7 +178,7 @@ def train_distill(args, device, loaders):
         total_kd   = 0.0
 
         for images, masks in loaders["train"]:
-            images, masks = images.to(device), masks.to(device)
+            images, masks = images.to(device, non_blocking= True), masks.to(device, non_blocking= True)
 
             optimizer.zero_grad()
 
@@ -251,7 +251,7 @@ def run_evaluation(args, device, loaders):
             print(f"  ⚠  Checkpoint manquant pour {name} — ignoré")
             continue
 
-        model = ModelClass().to(device)
+        model = ModelClass().to(device, non_blocking= True)
         load_checkpoint(model, ckpt_path, device)
 
         metrics = evaluate(model, loaders["test"], device)

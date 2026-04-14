@@ -2,6 +2,8 @@ data/
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
-*.pth
+
 
 .venv/
+
+*.pdf
